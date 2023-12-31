@@ -304,7 +304,7 @@ questions = {
                 'A term which means a function that calls itself🔄📞🤖',
                 'A term meaning a change of course in the idea of building a program🔄🛣️🔄'
                         ],
-            'correct_ans': 'Term which means a function that calls itself🔄📞🤖'
+            'correct_ans': 'A term which means a function that calls itself🔄📞🤖'
         }
     },
     'alg_15': {
@@ -332,8 +332,10 @@ questions = {
 }
 
 
-
-
+correct_answers_idxs = {}
+for key, value in questions.items():
+    correct_answers_idxs[key] = value['eng_version']['options'].index(value['eng_version']['correct_ans'])
+print(correct_answers_idxs)
 
 msg_intr_rus_version = '''🤖Добро пожаловать машинно-обученческую бот-анкету!🧠🤖
 

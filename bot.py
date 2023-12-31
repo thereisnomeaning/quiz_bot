@@ -71,9 +71,14 @@ def callback_handler(call):
         language = call.data[7:]
         redo = False
         markup = final_markup(language)
-        results = user_data[user_id]['results']
-        bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id,
-                              text=finish_text(language, results), reply_markup=markup)
+        try:
+            scores = user_data[user_id]['results'][0]
+            correct_results = user_data[user_id]['results'][1]
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id,
+                                  text=finish_text(language, scores, correct_results), reply_markup=markup)
+        except:
+            pass
+
 
 
 
@@ -81,10 +86,11 @@ def callback_handler(call):
                        'redo_eng_version', 'finish_eng_version', 'finish_rus_version']:
         callback_question_num = int(call.message.text[:2])
         card_key = user_data[user_id]['all_questions'][len(questions) - callback_question_num]
+        print(card_key)
         if call.data in ['redo_rus_version', 'redo_eng_version']:
             language = call.data[5:]
             redo = True
-            chosen_option_index = user_data[user_id]['answers'][card_key]
+            chosen_option_index = user_data[user_id]['answers'][card_key][1]
             redo_answer = questions[card_key][call.data[5:]]['options'][chosen_option_index]
             if user_data[user_id]['question_num'] == len(questions):
                 markup = markup_func_redo(language, final_question=True)
@@ -127,11 +133,13 @@ def callback_handler(call):
             callback_question_num = int(call.message.text[:2])
             card_key = user_data[user_id]['all_questions'][len(questions)-callback_question_num]
             current_language = 'eng_version' if 'c' in call.message.text[1:4] else 'rus_version'
+            user_answer = int(call.data)
+            correct_ans_idx = correct_answers_idxs[card_key]
 
-            if questions[card_key]['eng_version']['options'][int(call.data)] == questions[card_key]['eng_version']['correct_ans']:
-                user_data[user_id]['answers'][card_key] = 1
+            if user_answer == correct_ans_idx:
+                user_data[user_id]['answers'][card_key] = [1, user_answer]
             else:
-                user_data[user_id]['answers'][card_key] = 0
+                user_data[user_id]['answers'][card_key] = [0, user_answer]
             if callback_question_num == len(questions):
                 markup = markup_func_redo(current_language, final_question=True)
             else:
@@ -159,9 +167,10 @@ def callback_handler(call):
             language = call.data[16:]
             markup = final_markup(language)
             answers = user_data[user_id]['answers']
-            results = counting_results(answers)
-            user_data[user_id]['results'] = results
-            bot.send_message(chat_id=user_id, text=finish_text(language, results), reply_markup=markup)
+            scores = counting_results(answers)
+            correct_results = correct_answers(user_data[user_id]['all_questions'], user_data[user_id]['answers'])
+            user_data[user_id]['results'] = [scores, correct_results]
+            bot.send_message(chat_id=user_id, text=finish_text(language, scores, correct_results), reply_markup=markup)
         with open('data.json', 'w') as file:
             json.dump(user_data, file)
 

@@ -126,15 +126,14 @@ def counting_results(answers):
     all_machine_learning = 0
     all_deep_learning = 0
     all_algorithms = 0
-    output = ''
 
     for key, value in answers.items():
         if key.startswith('ml'):
-            machine_learning += value
+            machine_learning += value[0]
         elif key.startswith('dl'):
-            deep_learning += value
+            deep_learning += value[0]
         elif key.startswith('alg'):
-            algorithms += value
+            algorithms += value[0]
 
     for key in questions.keys():
         if key.startswith('ml'):
@@ -149,6 +148,17 @@ def counting_results(answers):
     algorithms = 100 / all_algorithms * algorithms
     return (machine_learning, deep_learning, algorithms)
 
+def correct_answers(all_questions, answers):
+    output = ''''''
+    letters = ['A)', 'B)', 'C)', 'D)']
+    for i, key in enumerate(all_questions[::-1]):
+        if key in answers and answers[key][0] == 1:
+            output += f'{i+1}: {letters[correct_answers_idxs[key]]}     ✔\n'
+        else:
+            output += f'{i+1}: {letters[correct_answers_idxs[key]]}     ❌\n'
+    return output
+
+
 
 def final_markup(language_vers):
     translate_button = types.InlineKeyboardButton(markup_dict[language_vers]['translate_name'],
@@ -157,7 +167,7 @@ def final_markup(language_vers):
     markup.add(translate_button)
     return markup
 
-def finish_text(language_vers, results):
+def finish_text(language_vers, results, correct_answers):
     machine_learning, deep_learning, algorithms = results
     if language_vers == 'rus_version':
         output = f'''Вы завершили тестирование, вот ваши результаты:
@@ -165,16 +175,18 @@ def finish_text(language_vers, results):
 По теме "машинное обучение"🤖📚✨ вы набрали {machine_learning}%
 По теме "глубокое обучение"🤖🧠🌐🚀 вы набрали {deep_learning}%
 По теме "алгоритмы"🔄🤖📊 вы набрали {algorithms}%
-        
-Спасибо за участие!'''
+
+Внизу представлен номер вопроса и правильный ответ:\n'''
+        output += correct_answers
     elif language_vers == 'eng_version':
         output = f'''You have finished testing, your results:
         
 On the subject "machine learning"🤖📚✨ you got {machine_learning}%
 On the subject "deep learning"🤖🧠🌐🚀 you got {deep_learning}%
 On the subject "algorithms"🔄🤖📊 you got {algorithms}%
-        
-Thank you for your participation!'''
+
+Below presented number of question and correct answer:\n'''
+        output += correct_answers
     return output
 
 
