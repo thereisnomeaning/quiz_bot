@@ -1,3 +1,5 @@
+from telebot import types
+
 questions = {
     'ml_1': {
         'rus_version': {
@@ -225,7 +227,7 @@ questions = {
             'options': [
                 'Выражать удивление, если встречаешь классный алгоритм🤩👾🔮',
                 'Обозначение для описания лучшего сценария скорости выполнения алгоритма📈😄',
-                'бозначение для описания среднего сценария скорости выполнения алгоритма⏰📊🤷‍♂',
+                'Обозначение для описания среднего сценария скорости выполнения алгоритма⏰📊🤷‍♂',
                 'Обозначение для описания худшего сценария скорости выполнения алгоритма📉🤔'
             ],
             'correct_ans': 'Обозначение для описания худшего сценария скорости выполнения алгоритма📉🤔'
@@ -331,12 +333,12 @@ questions = {
     },
 }
 
-
+# Внизу мы создаем словарь, где каждому вопросу будет соответствовать индекс правильного ответа из questions.
 correct_answers_idxs = {}
 for key, value in questions.items():
     correct_answers_idxs[key] = value['eng_version']['options'].index(value['eng_version']['correct_ans'])
-print(correct_answers_idxs)
 
+# Вступление
 msg_intr_rus_version = '''🤖Добро пожаловать машинно-обученческую бот-анкету!🧠🤖
 
 Приготовьтесь проверить свои знания в увлекательном мире искусственного интеллекта. В этой викторине вас ждут вопросы по различным темам, включая Машинное Обучение, Глубокое Обучение и Алгоритмы. Независимо от того, являетесь ли вы новичком или энтузиастом искусственного интеллекта, испытайте себя!🧠💡'''
@@ -344,9 +346,7 @@ msg_intr_eng_version = '''🤖Welcome to the Machine learning Quiz Bot!🧠🤖
 
 Get ready to challenge your knowledge in the fascinating world of artificial intelligence. This quiz covers a range of topics, including Machine Learning, Deep Learning, and Algorithms. Whether you're a beginner or an AI enthusiast, let me try you!🧠💡'''
 
-finish_text_rus_version = 'вы завершили текст'
-finish_text_eng_version = 'you finished the test'
-
+# Командa /help
 help_cmd_eng_version = f'''The test consists of {len(questions)} questions on the topics of "Machine Learning," "Deep Learning," and "Algorithms." At the end of the test, you will receive a message with the results.
 
 The features of the bot are as follows:
@@ -369,3 +369,232 @@ help_cmd_rus_version = f'''Тест включает в себя {len(questions)
 
 Удачи!
 '''
+
+# Словарь с названиями кнопок и их callback'ами, а также русскими и английскими текстами для нашего бота.
+markup_dict = {'eng_version': {
+                    'translate_name': 'Перевести на русский',
+                    'translate_callback': 'rus_version',
+                    'translate_redo_callback': 'redo_rus_version',
+                    'redo_name': 'Answer differently',
+                    'redo_callback': 'redo_callback_eng_version',
+                    'next_question_name': 'Next question',
+                    'next_question_callback': 'next_question',
+                    'introduction_starting': 'Start testing',
+                    'introduction_callback': 'intr_rus_version',
+                    'card': 'card',
+                    'redo_sentence': 'Your answer:',
+                    'intr_msg_language': msg_intr_eng_version,
+                    'finishing': 'finish the test',
+                    'finish_callback': 'finish_callback_eng_version',
+                    'callback_finish_translate': 'finish_rus_version',
+                    'help_text': help_cmd_eng_version,
+                    'help_callback': 'help_rus_version'
+},
+                'rus_version': {
+                    'translate_name': 'Translate to english',
+                    'translate_callback': 'eng_version',
+                    'translate_redo_callback': 'redo_eng_version',
+                    'redo_name': 'Ответить иначе',
+                    'redo_callback': 'redo_callback_rus_version',
+                    'next_question_name': 'Следующий вопрос',
+                    'next_question_callback': 'next_question',
+                    'introduction_starting': 'Начать тестирование',
+                    'introduction_callback': 'intr_eng_version',
+                    'card': 'билет',
+                    'redo_sentence': 'Ваш ответ:',
+                    'intr_msg_language': msg_intr_rus_version,
+                    'finishing': 'завершить тест',
+                    'finish_callback': 'finish_callback_rus_version',
+                    'callback_finish_translate': 'finish_eng_version',
+                    'help_text': help_cmd_rus_version,
+                    'help_callback': 'help_eng_version'
+                }
+}
+
+# Дальше идут функции, относящиеся к генерации текста
+
+# Подсчет результатов пользователя.
+def counting_results(answers):
+    machine_learning = 0
+    deep_learning = 0
+    algorithms = 0
+    all_machine_learning = 0
+    all_deep_learning = 0
+    all_algorithms = 0
+
+    for key, value in answers.items():
+        if key.startswith('ml'):
+            machine_learning += value[0]
+        elif key.startswith('dl'):
+            deep_learning += value[0]
+        elif key.startswith('alg'):
+            algorithms += value[0]
+
+    for key in questions.keys():
+        if key.startswith('ml'):
+            all_machine_learning += 1
+        elif key.startswith('dl'):
+            all_deep_learning += 1
+        elif key.startswith('alg'):
+            all_algorithms += 1
+
+    machine_learning = 100 / all_machine_learning * machine_learning
+    deep_learning = 100 / all_deep_learning * deep_learning
+    algorithms = 100 / all_algorithms * algorithms
+    return (machine_learning, deep_learning, algorithms)
+
+
+# Создание текста, где будет показан вопрос, правильный ответ и галочка либо крестик,
+# в зависимости от правильности ответа.
+def correct_answers(all_questions, answers):
+
+    output = ''''''
+    letters = ['A)', 'B)', 'C)', 'D)']
+
+    for i, key in enumerate(all_questions[::-1]):
+        if key in answers and answers[key][0] == 1:
+            output += f'{i+1}: {letters[correct_answers_idxs[key]]}     ✔\n'
+        else:
+            output += f'{i+1}: {letters[correct_answers_idxs[key]]}     ❌\n'
+
+    return output
+
+
+# Создание текста вопроса
+def making_question(language_vers, key, question_num, redo=False, redo_answer=False):
+
+    output = f'''{question_num} {markup_dict[language_vers]["card"]}\n\n'''
+    output += questions[key][language_vers]['question'] + '\n\n'
+    letters = ['A)', 'B)', 'C)', 'D)']
+    options = questions[key][language_vers]['options']
+
+    for l, o in zip(letters, options):
+        output += f'{l} {o}\n'
+    if redo == True:
+        output += f'\n{markup_dict[language_vers]["redo_sentence"]} {redo_answer}'
+
+    return output
+
+
+# Генерируем финальный текст
+def finish_text(language_vers, results, correct_answers):
+    machine_learning, deep_learning, algorithms = results
+
+    if language_vers == 'rus_version':
+        output = f'''Вы завершили тестирование, вот ваши результаты:
+
+По теме "машинное обучение"🤖📚✨ вы набрали {machine_learning}%
+По теме "глубокое обучение"🤖🧠🌐🚀 вы набрали {deep_learning}%
+По теме "алгоритмы"🔄🤖📊 вы набрали {algorithms}%
+
+Внизу представлен номер вопроса и правильный ответ:\n'''
+        output += correct_answers
+
+    elif language_vers == 'eng_version':
+        output = f'''You have finished testing, your results are:
+
+On the subject "machine learning"🤖📚✨ you got {machine_learning}%
+On the subject "deep learning"🤖🧠🌐🚀 you got {deep_learning}%
+On the subject "algorithms"🔄🤖📊 you got {algorithms}%
+
+Below presented number of question and correct answer:\n'''
+        output += correct_answers
+
+    return output
+
+
+# Дальше идут функции для создания markup'ов.
+
+
+# Создание markup'a для команды /start.
+# Состоит из кнопок "перевести текст" и "начать тест" для русской и английской версии.
+def markup_func_introduction(language_vers):
+    markup = types.InlineKeyboardMarkup()
+    translate_button = types.InlineKeyboardButton(markup_dict[language_vers]['translate_name'],
+                                        callback_data=markup_dict[language_vers]['introduction_callback'])
+    starting_button = types.InlineKeyboardButton(markup_dict[language_vers]['introduction_starting'],
+                                                 callback_data=markup_dict[language_vers]['next_question_callback'])
+    markup.add(translate_button)
+    markup.add(starting_button)
+
+    return markup
+
+
+# Markup для команды /help.
+# Тут есть только кнопка "перевести текст".
+def help_markup(language_vers):
+
+    markup = types.InlineKeyboardMarkup()
+    translate_button = types.InlineKeyboardButton(markup_dict[language_vers]['translate_name'],
+                                                  callback_data=markup_dict[language_vers]['help_callback'])
+    markup.add(translate_button)
+
+    return markup
+
+
+# Markup для вопроса
+# Состоит из кнопок вариантов ответа, перевода вопроса на другой язык и кнопки следующего вопроса.
+def markup_func(language_vers, final_question=False):
+
+    markup = types.InlineKeyboardMarkup()
+    translate_button = types.InlineKeyboardButton(markup_dict[language_vers]['translate_name'],
+                                                  callback_data=markup_dict[language_vers]['translate_callback'])
+    a_button = types.InlineKeyboardButton('A', callback_data='0')
+    b_button = types.InlineKeyboardButton('B', callback_data='1')
+    c_button = types.InlineKeyboardButton('C', callback_data='2')
+    d_button = types.InlineKeyboardButton('D', callback_data='3')
+
+    markup.row(a_button, b_button)
+    markup.row(c_button, d_button)
+    markup.add(translate_button)
+
+    #  Если наш вопрос последний, то вместо кнопки "следующий вопрос" у нас кнопка "завершить тестирование"
+    if not final_question:
+        next_question_button = types.InlineKeyboardButton(markup_dict[language_vers]['next_question_name'],
+                                                          callback_data=markup_dict[language_vers][
+                                                              'next_question_callback'])
+        markup.add(next_question_button)
+    else:
+        finish_button = types.InlineKeyboardButton(markup_dict[language_vers]['finishing'],
+                                                   callback_data=markup_dict[language_vers]['finish_callback'])
+        markup.add(finish_button)
+
+    return markup
+
+
+# Markup для сообщения, когда пользователь уже ответил на вопрос.
+# У нас есть кнопка "ответить иначе", "перевести вопрос" и "следующий вопрос" или "завершить тестирование"
+def markup_func_redo(language_vers, final_question=False):
+
+    markup = types.InlineKeyboardMarkup()
+    translate_button = types.InlineKeyboardButton(markup_dict[language_vers]['translate_name'],
+                                                  callback_data=markup_dict[language_vers]['translate_redo_callback'])
+    redo_button = types.InlineKeyboardButton(markup_dict[language_vers]['redo_name'],
+                                             callback_data=markup_dict[language_vers]['redo_callback'])
+
+    markup.add(translate_button)
+    markup.add(redo_button)
+
+    # Если наш вопрос последний, то вместо кнопки "следующий вопрос" у нас кнопка "завершить тестирование".
+    if not final_question:
+        next_question_button = types.InlineKeyboardButton(markup_dict[language_vers]['next_question_name'],
+                               callback_data=markup_dict[language_vers]['next_question_callback'])
+        markup.add(next_question_button)
+    else:
+        finish_button = types.InlineKeyboardButton(markup_dict[language_vers]['finishing'],
+                                                   callback_data=markup_dict[language_vers]['finish_callback'])
+        markup.add(finish_button)
+
+    return markup
+
+
+# Финальный markup для перевода результатов тестирования.
+def final_markup(language_vers):
+
+    translate_button = types.InlineKeyboardButton(markup_dict[language_vers]['translate_name'],
+                                callback_data=markup_dict[language_vers]['callback_finish_translate'])
+    markup = types.InlineKeyboardMarkup()
+
+    markup.add(translate_button)
+
+    return markup
